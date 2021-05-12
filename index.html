@@ -53,6 +53,86 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE." />
 <!--~~ Raw markup ~~-->
 
 
+<script>
+/*\
+title: $:/plugins/tiddlywiki/browser-storage/rawmarkup.js
+type: application/javascript
+module-type: library
+
+Startup code injected as raw markup
+
+\*/
+
+(function() {
+
+// Need to initialise these because we run before bootprefix.js and boot.js
+$tw = window.$tw || Object.create(null);
+$tw.hooks = $tw.hooks || { names: {}};
+$tw.boot = $tw.boot || {};
+$tw.boot.preloadDirty = $tw.boot.preloadDirty || [];
+
+// Hook the point in the startup process when the tiddlers have been loaded but plugins not unpacked
+var hookName = "th-boot-tiddlers-loaded";
+if(Object.prototype.hasOwnProperty.call($tw.hooks.names,hookName)) {
+	$tw.hooks.names[hookName].push(hookBootTiddlersLoaded);
+} else {
+	$tw.hooks.names[hookName] = [hookBootTiddlersLoaded];
+}
+
+// Load tiddlers from browser storage
+function hookBootTiddlersLoaded() {
+	var url = window.location.pathname,
+		log = [];
+	// Check that browser storage is available
+	try {
+		window.localStorage;
+	} catch(e) {
+		return;
+	}
+	// Step through each browsder storage item
+	for(var index=0; index<window.localStorage.length; index++) {
+		var key = window.localStorage.key(index),
+			parts = key.split("#");
+		// If it's ours
+		if(parts[0] === "tw5" && parts[1] === url) {
+			// Read it as JSON
+			var jsonString = window.localStorage.getItem(key),
+				jsonData;
+			if(jsonString) {
+				try {
+					jsonData = JSON.parse(jsonString);
+				} catch(e) {}
+				if(jsonData) {
+					// Convert it to a tiddler
+					var incomingTiddler = new $tw.Tiddler(jsonData);
+					if(incomingTiddler) {
+						// Get any existing tiddler
+						var title = incomingTiddler.fields.title,
+							existingTiddler = $tw.wiki.getTiddler(title);
+						if(existingTiddler && existingTiddler.isEqual(incomingTiddler)) {
+							// If the incoming tiddler is the same as the existing then we can delete the local storage version
+							window.localStorage.removeItem(key);
+						} else {
+							$tw.wiki.addTiddler(incomingTiddler);
+							log.push(title);
+						}
+					}
+				}
+			}
+		}
+	}
+	// Make sure that all the tiddlers we've loaded are marked as dirty at startup
+	Array.prototype.push.apply($tw.boot.preloadDirty,log);
+	// Save the log
+	$tw.wiki.addTiddler({
+		title: "$:/temp/BrowserStorage/Log",
+		text: $tw.utils.stringifyList(log)
+	});
+}
+
+})();
+
+</script>
 
 </head>
 <body class="tc-body">
@@ -142,6 +222,16 @@ Error message and password prompt
 <p>This <a class="tc-tiddlylink-external" href="https://tiddlywiki.com" rel="noopener noreferrer" target="_blank">TiddlyWiki</a> contains the following tiddlers:</p><p><ul>
 
 <li>$:/core</li>
+
+<li>$:/GitHub/Branch</li>
+
+<li>$:/GitHub/Filename</li>
+
+<li>$:/GitHub/Path</li>
+
+<li>$:/GitHub/Repo</li>
+
+<li>$:/GitHub/Username</li>
 
 <li>$:/isEncrypted</li>
 
@@ -10057,6 +10147,21 @@ Error message and password prompt
     }
 }</pre>
 </div>
+<div created="20210512073223986" modified="20210512073224275" title="$:/GitHub/Branch">
+<pre>main</pre>
+</div>
+<div created="20210512073229494" modified="20210512073230951" title="$:/GitHub/Filename">
+<pre>index.html</pre>
+</div>
+<div created="20210512073227271" modified="20210512073227271" title="$:/GitHub/Path">
+<pre>/</pre>
+</div>
+<div created="20210512073222027" modified="20210512073222027" title="$:/GitHub/Repo">
+<pre>xialvjun/tiddlywiki</pre>
+</div>
+<div created="20210512073156429" modified="20210512073156429" title="$:/GitHub/Username">
+<pre>xialvjun</pre>
+</div>
 <div title="$:/isEncrypted">
 <pre>no</pre>
 </div>
@@ -13966,8 +14071,8 @@ Error message and password prompt
 <div created="20210512063022980" modified="20210512063419540" title="$:/state/tab--1418380610">
 <pre>$:/core/ui/ControlPanel/Plugins/Add/Plugins</pre>
 </div>
-<div created="20210512063102558" modified="20210512063102558" title="$:/state/tab--2112689675">
-<pre>$:/core/ui/ControlPanel/Advanced</pre>
+<div created="20210512063102558" modified="20210512073107703" title="$:/state/tab--2112689675">
+<pre>$:/core/ui/ControlPanel/Basics</pre>
 </div>
 <div created="20210512063016807" modified="20210512063130517" title="$:/state/tab--86143343">
 <pre>$:/core/ui/ControlPanel/Plugins/Installed/Languages</pre>
@@ -13975,10 +14080,10 @@ Error message and password prompt
 <div created="20210512062934029" modified="20210512062937398" title="$:/state/tab-1163638994">
 <pre>$:/core/ui/MoreSideBar/Plugins/Plugins</pre>
 </div>
-<div created="20210512063014149" modified="20210512063415128" title="$:/state/tab-1749438307">
-<pre>$:/core/ui/ControlPanel/Plugins</pre>
+<div created="20210512063014149" modified="20210512073142988" title="$:/state/tab-1749438307">
+<pre>$:/core/ui/ControlPanel/Saving</pre>
 </div>
-<div created="20210512063202108" modified="20210512063413060" title="$:/state/tab-2065006209">
+<div created="20210512063202108" modified="20210512073241468" title="$:/state/tab-2065006209">
 <pre>$:/core/ui/ControlPanel/Saving/GitHub</pre>
 </div>
 <div created="20210512062930813" modified="20210512062946983" title="$:/state/tab/moresidebar-1850697562">
@@ -13988,9 +14093,9 @@ Error message and password prompt
 <pre>$:/core/ui/SideBar/Recent</pre>
 </div>
 <div title="$:/status/RequireReloadDueToPluginChange">
-<pre>yes</pre>
+<pre>no</pre>
 </div>
-<div created="20210512062919907" list="$:/ControlPanel" modified="20210512063033163" title="$:/StoryList">
+<div created="20210512072900431" list="$:/ControlPanel GettingStarted" modified="20210512072900431" title="$:/StoryList">
 <pre></pre>
 </div>
 <div author="JeremyRuston" core-version="&gt;=5.0.0" dependents="$:/themes/tiddlywiki/vanilla" description="Emphasises individual tiddlers" name="Snow White" plugin-priority="0" plugin-type="theme" title="$:/themes/tiddlywiki/snowwhite" type="application/json" version="5.1.23">
